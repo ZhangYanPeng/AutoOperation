@@ -1,0 +1,287 @@
+FORMAT: 1A
+
+# 网络设备管理API
+
+网络设备管理系统API文档，支持交换机、路由器等网络设备的配置和监控。
+
+HOST: http://network-manager:8080
+
+## 设备信息 [/api/devices]
+
+### 获取设备列表 [GET /api/devices{?type,status}]
+
+获取所有网络设备的列表信息
+
++ Parameters
+    + type: `switch` (string, optional) - 设备类型（switch, router, firewall）
+    + status: `online` (string, optional) - 设备状态（online, offline, unknown）
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "devices": [
+                        {
+                            "device_id": "sw-001",
+                            "name": "Core Switch 1",
+                            "type": "switch",
+                            "ip_address": "192.168.1.10",
+                            "status": "online",
+                            "uptime": 86400,
+                            "last_seen": "2024-01-15T11:00:00Z"
+                        }
+                    ],
+                    "total": 1
+                }
+            }
+
+### 添加新设备 [POST /api/devices]
+
+向系统中添加新的网络设备
+
++ Request (application/json)
+    + Body
+
+            {
+                "name": "Access Switch 1",
+                "type": "switch",
+                "ip_address": "192.168.1.20",
+                "snmp_community": "public",
+                "location": "Building A Floor 1"
+            }
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "message": "Device added successfully",
+                "data": {
+                    "device_id": "sw-002",
+                    "name": "Access Switch 1",
+                    "status": "pending"
+                }
+            }
+
+## 设备配置 [/api/devices/{device_id}]
+
+### 获取设备详情 [GET /api/devices/{device_id}]
+
+获取指定设备的详细信息和配置
+
++ Parameters
+    + device_id: `sw-001` (string, required) - 设备ID
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "device_id": "sw-001",
+                    "name": "Core Switch 1",
+                    "type": "switch",
+                    "ip_address": "192.168.1.10",
+                    "status": "online",
+                    "ports": [
+                        {
+                            "port_id": "1/0/1",
+                            "name": "GigabitEthernet1/0/1",
+                            "status": "up",
+                            "speed": "1000Mbps",
+                            "duplex": "full"
+                        }
+                    ],
+                    "vlans": [
+                        {
+                            "vlan_id": 100,
+                            "name": "Management",
+                            "status": "active"
+                        }
+                    ]
+                }
+            }
+
+### 更新设备配置 [PUT /api/devices/{device_id}/config]
+
+更新设备的配置信息
+
++ Parameters
+    + device_id: `sw-001` (string, required) - 设备ID
+
++ Request (application/json)
+    + Body
+
+            {
+                "vlans": [
+                    {
+                        "vlan_id": 200,
+                        "name": "Production",
+                        "action": "add"
+                    }
+                ],
+                "ports": [
+                    {
+                        "port_id": "1/0/2",
+                        "vlan": 200,
+                        "mode": "access"
+                    }
+                ]
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "message": "Configuration updated successfully",
+                "data": {
+                    "changes_applied": 2,
+                    "rollback_id": "rb-001"
+                }
+            }
+
+## 端口管理 [/api/devices/{device_id}/ports]
+
+### 获取端口状态 [GET /api/devices/{device_id}/ports]
+
+获取设备所有端口的状态信息
+
++ Parameters
+    + device_id: `sw-001` (string, required) - 设备ID
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "ports": [
+                        {
+                            "port_id": "1/0/1",
+                            "name": "GigabitEthernet1/0/1",
+                            "status": "up",
+                            "admin_status": "up",
+                            "speed": "1000Mbps",
+                            "duplex": "full",
+                            "vlan": 100,
+                            "mode": "access",
+                            "traffic": {
+                                "rx_bytes": 1024000,
+                                "tx_bytes": 2048000,
+                                "rx_packets": 1000,
+                                "tx_packets": 2000,
+                                "errors": 0
+                            }
+                        }
+                    ]
+                }
+            }
+
+### 配置端口 [PUT /api/devices/{device_id}/ports/{port_id}]
+
+配置指定端口的参数
+
++ Parameters
+    + device_id: `sw-001` (string, required) - 设备ID
+    + port_id: `1/0/1` (string, required) - 端口ID
+
++ Request (application/json)
+    + Body
+
+            {
+                "admin_status": "up",
+                "vlan": 200,
+                "mode": "access",
+                "description": "Server Connection"
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "message": "Port configuration updated",
+                "data": {
+                    "port_id": "1/0/1",
+                    "previous_config": {
+                        "vlan": 100,
+                        "mode": "access"
+                    },
+                    "new_config": {
+                        "vlan": 200,
+                        "mode": "access"
+                    }
+                }
+            }
+
+## 网络监控 [/api/monitoring]
+
+### 获取网络流量统计 [GET /api/monitoring/traffic{?device_id,time_range}]
+
+获取网络设备的流量统计信息
+
++ Parameters
+    + device_id: `sw-001` (string, optional) - 指定设备ID，不指定则返回所有设备
+    + time_range: `1h` (string, optional) - 时间范围（1h, 6h, 24h, 7d）
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "time_range": "1h",
+                    "devices": [
+                        {
+                            "device_id": "sw-001",
+                            "total_rx_bytes": 10240000,
+                            "total_tx_bytes": 20480000,
+                            "peak_utilization": 45.2,
+                            "average_utilization": 32.1,
+                            "ports": [
+                                {
+                                    "port_id": "1/0/1",
+                                    "rx_bytes": 5120000,
+                                    "tx_bytes": 10240000,
+                                    "utilization": 40.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+
+### 设置监控告警 [POST /api/monitoring/alerts]
+
+创建新的监控告警规则
+
++ Request (application/json)
+    + Body
+
+            {
+                "name": "High CPU Alert",
+                "device_id": "sw-001",
+                "metric": "cpu_usage",
+                "threshold": 80,
+                "operator": "greater_than",
+                "duration": 300,
+                "notification": {
+                    "email": ["admin@company.com"],
+                    "webhook": "http://alerting-system:8080/webhook"
+                }
+            }
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "message": "Alert rule created successfully",
+                "data": {
+                    "alert_id": "alert-001",
+                    "status": "active"
+                }
+            }
