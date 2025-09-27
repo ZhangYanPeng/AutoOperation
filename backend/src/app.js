@@ -4,8 +4,21 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { logger } from './utils/logger.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { requestLogger } from './middleware/requestLogger.js';
+
+// 新的中间件系统导入
+const {
+  requestLogger,
+  errorHandler,
+  notFound,
+  corsOptions,
+  apiLimiter,
+  sessionCreationLimiter,
+  requestId,
+  requestSizeLimit,
+  securityHeaders,
+  validateContentType,
+  validateNotEmpty
+} = require('./middleware/index.js');
 
 // 服务导入
 import { llmService } from './services/LLMService.js';
@@ -39,27 +52,21 @@ async function initializeServices() {
   }
 }
 
-// 基础中间件
-app.use(helmet());
+// 基础中间件配置
+app.use(requestId); // 请求ID
+app.use(securityHeaders); // 安全头
 app.use(compression());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}));
+app.use(cors(corsOptions)); // 使用新的CORS配置
+app.use(requestSizeLimit); // 请求大小限制
 
-// 请求限制
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 每个IP最多100个请求
-  message: '请求过于频繁，请稍后再试',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', limiter);
+// API请求限制
+app.use('/api/', apiLimiter);
 
-// 解析JSON
+// 内容类型和请求体验证
+app.use(validateContentType());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(validateNotEmpty);
 
 // 请求日志中间件
 app.use(requestLogger);
@@ -98,12 +105,7 @@ app.use('/api/v1/tools', toolRoutes);
 app.use('/api/v1/knowledge', knowledgeRoutes);
 
 // 404处理
-app.use('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Not Found', 
-    message: `Route ${req.originalUrl} not found` 
-  });
-});
+app.use(notFound);
 
 // 错误处理中间件
 app.use(errorHandler);

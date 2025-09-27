@@ -1,0 +1,45 @@
+{
+  "app": {
+    "port": 3001,
+    "host": "0.0.0.0"
+  },
+  "llm": {
+    "provider": "mock",
+    "timeout": 5000
+  },
+  "session": {
+    "dataPath": "./data/sessions-dev",
+    "maxSessions": 100
+  },
+  "security": {
+    "cors": {
+      "origin": [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000"
+      ]
+    },
+    "rateLimit": {
+      "general": {
+        "max": 200
+      },
+      "api": {
+        "max": 100
+      }
+    }
+  },
+  "logging": {
+    "level": "debug",
+    "console": {
+      "enabled": true,
+      "colorize": true
+    },
+    "file": {
+      "enabled": false
+    }
+  },
+  "monitoring": {
+    "enabled": true
+  }
+}

@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Send, Loader, AlertCircle, BookOpen, TrendingUp } from 'lucide-react'
-import { apiClient } from '@/utils/api'
+import { useSession } from '@/hooks/useSession'
 import toast from 'react-hot-toast'
 import type { CreateSessionRequest } from '@/types'
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate()
+  const { createSession, isSessionLoading } = useSession()
   const [formData, setFormData] = useState<CreateSessionRequest>({
     problemCategory: '',
     problemDescription: ''
   })
-  const [isLoading, setIsLoading] = useState(false)
 
   const problemCategories = [
     { value: 'performance', label: '性能问题', description: 'CPU、内存、磁盘等性能相关问题' },
@@ -45,16 +45,12 @@ const HomePage: React.FC = () => {
       return
     }
 
-    setIsLoading(true)
     try {
-      const result = await apiClient.createSession(formData)
-      toast.success('会话创建成功，开始智能分析...')
+      const result = await createSession(formData)
       navigate(`/session/${result.session.session_id}`)
     } catch (error) {
+      // 错误已在hook中处理
       console.error('创建会话失败:', error)
-      toast.error('创建会话失败，请重试')
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -151,7 +147,7 @@ const HomePage: React.FC = () => {
                 placeholder="请详细描述您遇到的问题现象，包括：&#10;1. 问题出现的时间和频率&#10;2. 具体的错误信息或异常表现&#10;3. 影响范围和严重程度&#10;4. 已经尝试过的解决方法&#10;&#10;信息越详细，AI分析越准确"
                 value={formData.problemDescription}
                 onChange={(e) => setFormData(prev => ({ ...prev, problemDescription: e.target.value }))}
-                disabled={isLoading}
+                disabled={isSessionLoading}
               />
             </div>
 
@@ -161,10 +157,10 @@ const HomePage: React.FC = () => {
               </div>
               <button
                 type="submit"
-                disabled={isLoading || !formData.problemCategory || !formData.problemDescription.trim()}
+                disabled={isSessionLoading || !formData.problemCategory || !formData.problemDescription.trim()}
                 className="btn btn-primary flex items-center space-x-2"
               >
-                {isLoading ? (
+                {isSessionLoading ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
                     <span>分析中...</span>

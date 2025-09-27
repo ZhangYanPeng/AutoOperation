@@ -2,29 +2,34 @@ import express from 'express';
 import { sessionManagementService } from '../services/SessionManagementService.js';
 import { logger } from '../utils/logger.js';
 
+// 导入中间件
+const {
+  asyncHandler,
+  validateSessionCreation,
+  validateStepExecution,
+  validateFeedback,
+  validateSessionSearch,
+  validateUUID,
+  sessionCreationLimiter
+} = require('../middleware/index.js');
+
 const router = express.Router();
 
 // 创建新会话
-router.post('/', async (req, res, next) => {
-  try {
-    const { problemCategory, problemDescription, userId } = req.body;
-    
-    // 验证请求参数
-    if (!problemCategory || !problemDescription) {
-      return res.status(400).json({
-        error: '参数验证失败',
-        message: '问题分类和问题描述不能为空'
-      });
-    }
+router.post('/', 
+  sessionCreationLimiter, // 会话创建频率限制
+  validateSessionCreation, // 验证输入参数
+  asyncHandler(async (req, res) => {
+    const { problem_category, problem_description, userId } = req.body;
 
     logger.info('创建新会话请求', {
-      category: problemCategory,
+      category: problem_category,
       userId: userId || 'anonymous'
     });
 
     const result = await sessionManagementService.createSession(
-      problemCategory,
-      problemDescription,
+      problem_category,
+      problem_description,
       userId
     );
 
@@ -32,23 +37,16 @@ router.post('/', async (req, res, next) => {
       success: true,
       data: result
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 执行处置步骤
-router.post('/:id/step', async (req, res, next) => {
-  try {
+router.post('/:id/step', 
+  validateUUID('id'), // 验证会话 ID
+  validateStepExecution, // 验证步骤执行参数
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { stepId, executionType = 'auto', userInput } = req.body;
-    
-    if (!stepId) {
-      return res.status(400).json({
-        error: '参数验证失败',
-        message: '步骤ID不能为空'
-      });
-    }
 
     logger.info(`执行会话 ${id} 的处置步骤`, { stepId, executionType });
 
@@ -63,23 +61,16 @@ router.post('/:id/step', async (req, res, next) => {
       success: true,
       data: result
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 反馈处置结果
-router.post('/:id/feedback', async (req, res, next) => {
-  try {
+router.post('/:id/feedback', 
+  validateUUID('id'), // 验证会话 ID
+  validateFeedback, // 验证反馈参数
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { stepId, feedback } = req.body;
-    
-    if (!stepId || !feedback) {
-      return res.status(400).json({
-        error: '参数验证失败',
-        message: '步骤ID和反馈内容不能为空'
-      });
-    }
 
     logger.info(`接收会话 ${id} 的反馈`, { stepId });
 
@@ -93,14 +84,13 @@ router.post('/:id/feedback', async (req, res, next) => {
       success: true,
       data: result
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 获取会话状态
-router.get('/:id/status', async (req, res, next) => {
-  try {
+router.get('/:id/status', 
+  validateUUID('id'), // 验证会话 ID
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     logger.info(`获取会话 ${id} 状态`);
 
@@ -110,14 +100,13 @@ router.get('/:id/status', async (req, res, next) => {
       success: true,
       data: status
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 获取会话详情
-router.get('/:id', async (req, res, next) => {
-  try {
+router.get('/:id', 
+  validateUUID('id'), // 验证会话 ID
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     logger.info(`获取会话 ${id} 详情`);
 
@@ -125,8 +114,10 @@ router.get('/:id', async (req, res, next) => {
     
     if (!session) {
       return res.status(404).json({
-        error: '会话不存在',
-        message: `会话 ${id} 未找到`
+        success: false,
+        error: {
+          message: `会话 ${id} 未找到`
+        }
       });
     }
 
@@ -134,14 +125,13 @@ router.get('/:id', async (req, res, next) => {
       success: true,
       data: session
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 完成会话
-router.post('/:id/complete', async (req, res, next) => {
-  try {
+router.post('/:id/complete', 
+  validateUUID('id'), // 验证会话 ID
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { summary } = req.body;
     
@@ -153,14 +143,13 @@ router.post('/:id/complete', async (req, res, next) => {
       success: true,
       data: result
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 删除会话
-router.delete('/:id', async (req, res, next) => {
-  try {
+router.delete('/:id', 
+  validateUUID('id'), // 验证会话 ID
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     logger.info(`删除会话 ${id}`);
 
@@ -170,14 +159,13 @@ router.delete('/:id', async (req, res, next) => {
       success: true,
       message: '会话删除成功'
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 获取用户会话列表
-router.get('/', async (req, res, next) => {
-  try {
+router.get('/', 
+  validateSessionSearch, // 验证搜索参数
+  asyncHandler(async (req, res) => {
     const { userId, limit = 50, offset = 0, search, category, status } = req.query;
     
     let result;
@@ -210,14 +198,13 @@ router.get('/', async (req, res, next) => {
       success: true,
       data: result
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 导出会话数据
-router.get('/:id/export', async (req, res, next) => {
-  try {
+router.get('/:id/export', 
+  validateUUID('id'), // 验证会话 ID
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { format = 'json' } = req.query;
     
@@ -235,14 +222,12 @@ router.get('/:id/export', async (req, res, next) => {
     }
     
     res.send(data);
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 // 获取统计信息
-router.get('/stats/overview', async (req, res, next) => {
-  try {
+router.get('/stats/overview', 
+  asyncHandler(async (req, res) => {
     logger.info('获取会话统计信息');
 
     const stats = sessionManagementService.getStatistics();
@@ -251,9 +236,7 @@ router.get('/stats/overview', async (req, res, next) => {
       success: true,
       data: stats
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 export default router;

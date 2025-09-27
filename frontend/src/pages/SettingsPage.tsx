@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Save, RefreshCw, Monitor, Bell, Globe, Palette } from 'lucide-react'
 import { apiClient } from '@/utils/api'
+import { useSessionStore } from '@/stores/sessionStore'
 import toast from 'react-hot-toast'
 import type { UserSettings, ThemeConfig } from '@/types'
 

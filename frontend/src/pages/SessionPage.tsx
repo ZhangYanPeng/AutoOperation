@@ -12,17 +12,22 @@ import {
   ChevronRight,
   RefreshCw
 } from 'lucide-react'
-import { apiClient } from '@/utils/api'
+import { useSession } from '@/hooks'
 import toast from 'react-hot-toast'
 import type { Session, Step, SessionStatus } from '@/types'
 
 const SessionPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>()
   const navigate = useNavigate()
-  const [session, setSession] = useState<Session | null>(null)
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus | null>(null)
-  const [currentStep, setCurrentStep] = useState<Step | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    currentSession: session,
+    sessionStatus,
+    currentStep,
+    isLoading,
+    loadSession,
+    executeStep,
+    provideFeedback
+  } = useSession()
   const [isExecuting, setIsExecuting] = useState(false)
   const [userInput, setUserInput] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
@@ -31,38 +36,26 @@ const SessionPage: React.FC = () => {
 
   useEffect(() => {
     if (sessionId) {
-      loadSession()
-      loadSessionStatus()
+      handleLoadSession()
     }
   }, [sessionId])
 
-  const loadSession = async () => {
+  const handleLoadSession = async () => {
     try {
-      const sessionData = await apiClient.getSession(sessionId!)
-      setSession(sessionData)
+      await loadSession(sessionId!)
     } catch (error) {
       console.error('加载会话失败:', error)
       toast.error('会话不存在或已删除')
       navigate('/')
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  const loadSessionStatus = async () => {
-    try {
-      const status = await apiClient.getSessionStatus(sessionId!)
-      setSessionStatus(status)
-      setCurrentStep(status.currentStep)
-    } catch (error) {
-      console.error('获取会话状态失败:', error)
-    }
-  }
-
-  const executeStep = async (step: Step, executionType: 'auto' | 'manual') => {
+  const handleExecuteStep = async (step: Step, executionType: 'auto' | 'manual') => {
+    if (!sessionId) return
+    
     setIsExecuting(true)
     try {
-      const result = await apiClient.executeStep(sessionId!, {
+      await executeStep(sessionId, {
         stepId: step.step_id,
         executionType,
         userInput: executionType === 'manual' ? userInput : undefined
@@ -70,10 +63,6 @@ const SessionPage: React.FC = () => {
       
       toast.success('步骤执行成功')
       setUserInput('')
-      
-      // 重新加载会话状态
-      await loadSession()
-      await loadSessionStatus()
     } catch (error) {
       console.error('执行步骤失败:', error)
       toast.error('步骤执行失败')
@@ -83,13 +72,13 @@ const SessionPage: React.FC = () => {
   }
 
   const handleFeedback = async () => {
-    if (!feedbackStep || !feedback.trim()) {
+    if (!feedbackStep || !feedback.trim() || !sessionId) {
       toast.error('请输入反馈内容')
       return
     }
 
     try {
-      await apiClient.provideFeedback(sessionId!, {
+      await provideFeedback(sessionId, {
         stepId: feedbackStep.step_id,
         feedback
       })
@@ -98,10 +87,6 @@ const SessionPage: React.FC = () => {
       setShowFeedbackModal(false)
       setFeedback('')
       setFeedbackStep(null)
-      
-      // 重新加载会话状态
-      await loadSession()
-      await loadSessionStatus()
     } catch (error) {
       console.error('提交反馈失败:', error)
       toast.error('反馈提交失败')
@@ -272,7 +257,7 @@ const SessionPage: React.FC = () => {
                       <div className="space-y-3">
                         {step.step_type === 'auto' && step.tool_api && (
                           <button
-                            onClick={() => executeStep(step, 'auto')}
+                            onClick={() => handleExecuteStep(step, 'auto')}
                             disabled={isExecuting}
                             className="btn btn-primary flex items-center space-x-2"
                           >
@@ -291,7 +276,7 @@ const SessionPage: React.FC = () => {
                               onChange={(e) => setUserInput(e.target.value)}
                             />
                             <button
-                              onClick={() => executeStep(step, 'manual')}
+                              onClick={() => handleExecuteStep(step, 'manual')}
                               disabled={isExecuting || !userInput.trim()}
                               className="btn btn-primary"
                             >

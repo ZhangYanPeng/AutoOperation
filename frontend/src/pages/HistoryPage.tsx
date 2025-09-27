@@ -11,18 +11,22 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react'
-import { apiClient } from '@/utils/api'
+import { useSessionHistory } from '@/hooks'
 import toast from 'react-hot-toast'
 import type { Session } from '@/types'
 
 const HistoryPage: React.FC = () => {
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    sessions,
+    totalSessions,
+    isLoading,
+    searchSessions,
+    deleteSession
+  } = useSessionHistory()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalSessions, setTotalSessions] = useState(0)
   const pageSize = 20
 
   useEffect(() => {
@@ -32,7 +36,7 @@ const HistoryPage: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery) {
-        searchSessions()
+        handleSearchSessions()
       } else {
         loadSessions()
       }
@@ -42,61 +46,51 @@ const HistoryPage: React.FC = () => {
   }, [searchQuery])
 
   const loadSessions = async () => {
-    setIsLoading(true)
     try {
       const filters: any = {}
       if (statusFilter !== 'all') filters.status = statusFilter
       if (categoryFilter !== 'all') filters.category = categoryFilter
 
-      const result = await apiClient.getUserSessions(
-        undefined, // userId - 如果需要用户权限，这里传入用户ID
+      await searchSessions(
+        '', // Empty query for loading all
+        filters,
         pageSize,
         (currentPage - 1) * pageSize
       )
-      
-      setSessions(result.sessions)
-      setTotalSessions(result.total)
     } catch (error) {
       console.error('加载会话历史失败:', error)
       toast.error('加载会话历史失败')
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  const searchSessions = async () => {
+  const handleSearchSessions = async () => {
     if (!searchQuery.trim()) {
       loadSessions()
       return
     }
 
-    setIsLoading(true)
     try {
       const filters: any = {}
       if (statusFilter !== 'all') filters.status = statusFilter
       if (categoryFilter !== 'all') filters.category = categoryFilter
 
-      const result = await apiClient.searchSessions(searchQuery, filters)
-      setSessions(result.results)
-      setTotalSessions(result.total)
+      await searchSessions(searchQuery, filters, pageSize, (currentPage - 1) * pageSize)
     } catch (error) {
       console.error('搜索会话失败:', error)
       toast.error('搜索会话失败')
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  const deleteSession = async (sessionId: string) => {
+  const handleDeleteSession = async (sessionId: string) => {
     if (!confirm('确定要删除这个会话吗？此操作不可恢复。')) {
       return
     }
 
     try {
-      await apiClient.deleteSession(sessionId)
+      await deleteSession(sessionId)
       toast.success('会话删除成功')
-      setSessions(sessions.filter(s => s.session_id !== sessionId))
-      setTotalSessions(prev => prev - 1)
+      // 重新加载数据
+      loadSessions()
     } catch (error) {
       console.error('删除会话失败:', error)
       toast.error('删除会话失败')
@@ -281,7 +275,7 @@ const HistoryPage: React.FC = () => {
                           </button>
                           
                           <button
-                            onClick={() => deleteSession(session.session_id)}
+                            onClick={() => handleDeleteSession(session.session_id)}
                             className="btn btn-sm btn-error flex items-center space-x-1"
                           >
                             <Trash2 className="w-3 h-3" />

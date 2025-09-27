@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "智能运维助手",
+    "version": "1.0.0",
+    "description": "基于大语言模型的智能化运维处置系统",
+    "port": 3000,
+    "host": "localhost"
+  },
+  "llm": {
+    "provider": "ollama",
+    "models": {
+      "analysis": "qwen:7b",
+      "generation": "qwen:7b",
+      "evaluation": "qwen:7b"
+    },
+    "endpoints": {
+      "ollama": "http://localhost:11434",
+      "openai": "https://api.openai.com/v1",
+      "azure": ""
+    },
+    "maxTokens": 2048,
+    "temperature": 0.7,
+    "timeout": 30000
+  },
+  "knowledge": {
+    "basePath": "./knowledge",
+    "operationsPath": "./knowledge/operations",
+    "apiDocsPath": "./knowledge/api-docs",
+    "indexFile": "knowledge-index.json",
+    "supportedFormats": ["md", "txt", "json"],
+    "maxFileSize": "10MB"
+  },
+  "tools": {
+    "enabledProviders": ["system", "network", "monitoring"],
+    "timeout": 60000,
+    "retryAttempts": 3,
+    "sandbox": true
+  },
+  "session": {
+    "storage": "file",
+    "dataPath": "./data/sessions",
+    "maxSessions": 1000,
+    "sessionTimeout": 3600000,
+    "autoSave": true,
+    "backupInterval": 300000
+  },
+  "security": {
+    "cors": {
+      "origin": ["http://localhost:5173", "http://localhost:3000"],
+      "credentials": true
+    },
+    "rateLimit": {
+      "general": {
+        "windowMs": 900000,
+        "max": 100
+      },
+      "api": {
+        "windowMs": 900000,
+        "max": 50
+      },
+      "session": {
+        "windowMs": 3600000,
+        "max": 10
+      }
+    },
+    "requestSizeLimit": "10mb"
+  },
+  "logging": {
+    "level": "info",
+    "file": {
+      "enabled": true,
+      "path": "./logs",
+      "maxSize": "100MB",
+      "maxFiles": 10
+    },
+    "console": {
+      "enabled": true,
+      "colorize": true
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "metricsPath": "/metrics",
+    "healthCheckPath": "/health",
+    "statusPath": "/status"
+  }
+}
