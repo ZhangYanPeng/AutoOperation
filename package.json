@@ -32,5 +32,11 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "file-type": "^21.0.0",
+    "markdown-it": "^14.1.0",
+    "multer": "^2.0.2",
+    "sharp": "^0.34.4"
   }
 }

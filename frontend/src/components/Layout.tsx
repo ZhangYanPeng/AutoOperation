@@ -8,7 +8,8 @@ import {
   Menu,
   X,
   Brain,
-  Activity
+  Activity,
+  BookOpen
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -24,6 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: '首页', href: '/', icon: Home },
     { name: '新建会话', href: '/', icon: MessageSquare },
     { name: '历史记录', href: '/history', icon: History },
+    { name: '知识库管理', href: '/knowledge', icon: BookOpen },
     { name: '设置', href: '/settings', icon: Settings },
   ]
 

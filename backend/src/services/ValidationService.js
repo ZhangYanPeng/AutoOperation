@@ -494,11 +494,7 @@ export class ValidationService {
     sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
     // 限制连续空行
-    sanitized = sanitized.replace(/
-{4,}/g, '
-
-
-');
+    sanitized = sanitized.replace(/\n{4,}/g, '\n\n\n');
 
     // 清理行尾空格
     sanitized = sanitized.replace(/ +$/gm, '');
