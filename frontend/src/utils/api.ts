@@ -18,7 +18,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+      baseURL: '/api/v1',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +74,14 @@ class ApiClient {
 
   // 会话管理API
   async createSession(data: CreateSessionRequest): Promise<{ session: Session; initialPlan: any }> {
-    const response = await this.client.post<ApiResponse<{ session: Session; initialPlan: any }>>('/session', data)
+    // 转换驼峰命名为下划线命名，与后端 API 保持一致
+    const requestData = {
+      problem_category: data.problemCategory,
+      problem_description: data.problemDescription,
+      userId: data.userId
+    }
+    
+    const response = await this.client.post<ApiResponse<{ session: Session; initialPlan: any }>>('/session', requestData)
     return response.data.data!
   }
 
@@ -220,12 +227,12 @@ class ApiClient {
 
   // 系统状态API
   async getHealthStatus(): Promise<any> {
-    const response = await this.client.get<ApiResponse<any>>('/../../health')
+    const response = await axios.get('http://localhost:3000/health')
     return response.data
   }
 
   async getSystemStatus(): Promise<any> {
-    const response = await this.client.get<ApiResponse<any>>('/../../status')
+    const response = await axios.get('http://localhost:3000/status')
     return response.data
   }
 }

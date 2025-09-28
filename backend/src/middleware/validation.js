@@ -3,8 +3,8 @@
  * 验证请求参数和数据格式
  */
 
-const { ValidationError } = require('./errorHandler');
-const { logger } = require('./logger');
+import { ValidationError } from './errorHandler.js';
+import { logger } from './logger.js';
 
 // 通用验证函数
 const validateRequired = (data, fields) => {
@@ -272,7 +272,7 @@ const validateContentType = (expectedType = 'application/json') => {
   };
 };
 
-module.exports = {
+export {
   validateRequired,
   validateTypes,
   validateLength,

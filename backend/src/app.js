@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { logger } from './utils/logger.js';
 
 // 新的中间件系统导入
-const {
+import {
   requestLogger,
   errorHandler,
   notFound,
@@ -18,7 +18,7 @@ const {
   securityHeaders,
   validateContentType,
   validateNotEmpty
-} = require('./middleware/index.js');
+} from './middleware/index.js';
 
 // 服务导入
 import { llmService } from './services/LLMService.js';

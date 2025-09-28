@@ -1,0 +1,37 @@
+{
+  "session_id": "34943975-77cb-40bb-be01-e39bb1f52752",
+  "problem_category": "network",
+  "problem_description": "部分用户反馈网站访问超时，网络连接不稳定",
+  "status": "processing",
+  "created_at": "2025-09-28T05:44:12.906Z",
+  "updated_at": "2025-09-28T05:44:12.906Z",
+  "user_id": null,
+  "metadata": {},
+  "steps": [
+    {
+      "step_id": "dd37636c-632f-4344-9ada-9ea88f9937e7",
+      "session_id": "34943975-77cb-40bb-be01-e39bb1f52752",
+      "step_order": 1,
+      "step_type": "manual",
+      "step_content": "这是一个模拟响应。根据您的问题：",
+      "tool_api": null,
+      "execution_status": "pending",
+      "execution_result": null,
+      "user_feedback": null,
+      "dependencies": [],
+      "timeout": 30000,
+      "retry_count": 0,
+      "max_retries": 3,
+      "created_at": "2025-09-28T05:44:12.906Z",
+      "updated_at": "2025-09-28T05:44:12.906Z",
+      "started_at": null,
+      "completed_at": null,
+      "duration": null
+    }
+  ],
+  "progress": {
+    "total_steps": 1,
+    "completed_steps": 0,
+    "current_step": "dd37636c-632f-4344-9ada-9ea88f9937e7"
+  }
+}

@@ -309,6 +309,76 @@ export class AzureOpenAIProvider extends LLMProvider {
 }
 
 /**
+ * Mock 提供商实现（用于测试和开发）
+ */
+export class MockProvider extends LLMProvider {
+  constructor(config) {
+    super(config);
+    this.name = 'Mock Provider';
+    this.type = 'mock';
+  }
+
+  // Mock 提供商不需要验证端点
+  validateConfig() {
+    if (!this.models || !this.models.primary) {
+      throw new Error(`${this.name}: 缺少主要模型配置`);
+    }
+  }
+
+  async chat(messages, options = {}) {
+    // 模拟等待时间
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const formattedMessages = this.formatMessages(messages);
+    const lastMessage = formattedMessages[formattedMessages.length - 1];
+    
+    // 生成模拟响应
+    let content = '这是一个模拟响应。根据您的问题：';
+    
+    if (lastMessage.content.includes('问题分类')) {
+      content = `
+## 问题分析
+根据您描述的问题，初步分析如下：
+
+## 处置步骤
+1. **查看系统状态** - 检查系统资源使用情况
+2. **排查日志** - 查看相关错误日志
+3. **重启服务** - 必要时重启相关服务
+
+## 注意事项
+- 操作前请备份重要数据
+- 遵循变更管理流程
+- 实时监控系统状态
+      `;
+    }
+    
+    logger.info('Mock Provider生成响应', {
+      messageCount: formattedMessages.length,
+      contentLength: content.length
+    });
+
+    return {
+      content,
+      model: 'mock-model',
+      usage: {
+        prompt_tokens: lastMessage.content.length,
+        completion_tokens: content.length,
+        total_tokens: lastMessage.content.length + content.length
+      },
+      finish_reason: 'stop'
+    };
+  }
+
+  async checkModelAvailability() {
+    return {
+      available: true,
+      model: 'mock-model',
+      availableModels: ['mock-model']
+    };
+  }
+}
+
+/**
  * 提供商工厂
  */
 export class LLMProviderFactory {
@@ -323,6 +393,9 @@ export class LLMProviderFactory {
         return new OpenAIProvider(config);
       case 'azure openai':
         return new AzureOpenAIProvider(config);
+      case 'mock provider':
+      case 'mock':
+        return new MockProvider(config);
       default:
         throw new Error(`不支持的大模型提供商: ${name}`);
     }
@@ -334,5 +407,6 @@ export default {
   OllamaProvider,
   OpenAIProvider,
   AzureOpenAIProvider,
+  MockProvider,
   LLMProviderFactory
 };

@@ -17,68 +17,36 @@ import type { Session } from '@/types'
 
 const HistoryPage: React.FC = () => {
   const {
-    sessions,
+    sessions: rawSessions,
+    isSessionsLoading,
+    sessionsError,
     totalSessions,
-    isLoading,
-    searchSessions,
-    deleteSession
+    currentPage,
+    pageSize,
+    totalPages,
+    hasNextPage,
+    hasPrevPage,
+    searchQuery,
+    statusFilter,
+    categoryFilter,
+    loadSessions,
+    deleteSession,
+    exportSession,
+    handleSearch,
+    handleStatusFilter,
+    handleCategoryFilter,
+    handlePageChange
   } = useSessionHistory()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 20
+
+  // 确保 sessions 总是一个数组
+  const sessions = rawSessions || []
 
   useEffect(() => {
+    // 由于 hook 内部已经处理了初始加载，这里不需要再次调用
+  }, [])
+
+  const handleRefresh = () => {
     loadSessions()
-  }, [currentPage, statusFilter, categoryFilter])
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchQuery) {
-        handleSearchSessions()
-      } else {
-        loadSessions()
-      }
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery])
-
-  const loadSessions = async () => {
-    try {
-      const filters: any = {}
-      if (statusFilter !== 'all') filters.status = statusFilter
-      if (categoryFilter !== 'all') filters.category = categoryFilter
-
-      await searchSessions(
-        '', // Empty query for loading all
-        filters,
-        pageSize,
-        (currentPage - 1) * pageSize
-      )
-    } catch (error) {
-      console.error('加载会话历史失败:', error)
-      toast.error('加载会话历史失败')
-    }
-  }
-
-  const handleSearchSessions = async () => {
-    if (!searchQuery.trim()) {
-      loadSessions()
-      return
-    }
-
-    try {
-      const filters: any = {}
-      if (statusFilter !== 'all') filters.status = statusFilter
-      if (categoryFilter !== 'all') filters.category = categoryFilter
-
-      await searchSessions(searchQuery, filters, pageSize, (currentPage - 1) * pageSize)
-    } catch (error) {
-      console.error('搜索会话失败:', error)
-      toast.error('搜索会话失败')
-    }
   }
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -88,22 +56,16 @@ const HistoryPage: React.FC = () => {
 
     try {
       await deleteSession(sessionId)
-      toast.success('会话删除成功')
-      // 重新加载数据
-      loadSessions()
     } catch (error) {
       console.error('删除会话失败:', error)
-      toast.error('删除会话失败')
     }
   }
 
-  const exportSession = async (sessionId: string) => {
+  const handleExportSession = async (sessionId: string) => {
     try {
-      // 这里应该调用后端的导出API
-      toast.success('导出功能开发中...')
+      await exportSession(sessionId)
     } catch (error) {
       console.error('导出会话失败:', error)
-      toast.error('导出会话失败')
     }
   }
 
@@ -143,8 +105,6 @@ const HistoryPage: React.FC = () => {
     return categoryMap[category] || category
   }
 
-  const totalPages = Math.ceil(totalSessions / pageSize)
-
   return (
     <div className="container-custom">
       <div className="max-w-6xl mx-auto">
@@ -155,11 +115,11 @@ const HistoryPage: React.FC = () => {
             <p className="text-gray-600 mt-1">查看和管理您的处置会话记录</p>
           </div>
           <button
-            onClick={loadSessions}
-            disabled={isLoading}
+            onClick={handleRefresh}
+            disabled={isSessionsLoading}
             className="btn btn-secondary flex items-center space-x-2"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isSessionsLoading ? 'animate-spin' : ''}`} />
             <span>刷新</span>
           </button>
         </div>
@@ -175,7 +135,7 @@ const HistoryPage: React.FC = () => {
                   placeholder="搜索会话..."
                   className="input pl-10"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -184,7 +144,7 @@ const HistoryPage: React.FC = () => {
               <select
                 className="input"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => handleStatusFilter(e.target.value)}
               >
                 <option value="all">所有状态</option>
                 <option value="processing">处理中</option>
@@ -197,7 +157,7 @@ const HistoryPage: React.FC = () => {
               <select
                 className="input"
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => handleCategoryFilter(e.target.value)}
               >
                 <option value="all">所有分类</option>
                 <option value="performance">性能问题</option>
@@ -212,11 +172,11 @@ const HistoryPage: React.FC = () => {
         </div>
 
         {/* 会话列表 */}
-        {isLoading ? (
+        {isSessionsLoading ? (
           <div className="flex-center py-12">
             <RefreshCw className="w-8 h-8 animate-spin text-primary-600" />
           </div>
-        ) : sessions.length === 0 ? (
+        ) : (!sessions || sessions.length === 0) ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="w-8 h-8 text-gray-400" />
@@ -254,7 +214,7 @@ const HistoryPage: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <span>创建时间: {new Date(session.created_at).toLocaleString('zh-CN')}</span>
-                          <span>步骤: {session.progress.completed}/{session.progress.total}</span>
+                          <span>步骤: {session.progress?.completed_steps || 0}/{session.progress?.total_steps || 0}</span>
                         </div>
                         
                         <div className="flex items-center space-x-2">
@@ -267,7 +227,7 @@ const HistoryPage: React.FC = () => {
                           </Link>
                           
                           <button
-                            onClick={() => exportSession(session.session_id)}
+                            onClick={() => handleExportSession(session.session_id)}
                             className="btn btn-sm btn-secondary flex items-center space-x-1"
                           >
                             <Download className="w-3 h-3" />
@@ -301,8 +261,8 @@ const HistoryPage: React.FC = () => {
             
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!hasPrevPage}
                 className="btn btn-sm btn-secondary"
               >
                 上一页
@@ -313,8 +273,8 @@ const HistoryPage: React.FC = () => {
               </span>
               
               <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!hasNextPage}
                 className="btn btn-sm btn-secondary"
               >
                 下一页

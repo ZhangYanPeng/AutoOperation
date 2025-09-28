@@ -3,11 +3,12 @@
  * 包含 CORS、请求限制、安全头等
  */
 
-const cors = require('cors');
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const { RateLimitError } = require('./errorHandler');
-const { logger } = require('./logger');
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import crypto from 'crypto';
+import { RateLimitError } from './errorHandler.js';
+import { logger } from './logger.js';
 
 // CORS 配置
 const corsOptions = {
@@ -111,7 +112,8 @@ const sessionCreationLimiter = rateLimit({
 
 // 请求ID中间件
 const requestId = (req, res, next) => {
-  req.id = require('crypto').randomUUID();
+  // Node.js 14 兼容性：使用 uuid 包替代 crypto.randomUUID
+  req.id = crypto.randomBytes(16).toString('hex');
   res.setHeader('X-Request-ID', req.id);
   next();
 };
@@ -187,7 +189,7 @@ const securityHeaders = helmet({
   crossOriginEmbedderPolicy: false // 关闭以支持某些第三方库
 });
 
-module.exports = {
+export {
   corsOptions,
   generalLimiter,
   apiLimiter,

@@ -54,27 +54,22 @@ export const useSessionHistory = () => {
           offset: (page - 1) * pageSize
         })
         
-        setSessions(result.results)
-        setTotalSessions(result.total)
+        setSessions(result.results || [])
+        setTotalSessions(result.total || 0)
       } else {
-        // 获取用户会话列表
-        result = await apiClient.getUserSessions(
-          undefined, // userId
-          pageSize,
-          (page - 1) * pageSize
-        )
+        // 获取会话列表（使用空搜索查询来统一数据结构）
+        const filters: any = {}
+        if (status !== 'all') filters.status = status
+        if (category !== 'all') filters.category = category
         
-        // 应用过滤器
-        let filteredSessions = result.sessions
-        if (status !== 'all') {
-          filteredSessions = filteredSessions.filter(s => s.status === status)
-        }
-        if (category !== 'all') {
-          filteredSessions = filteredSessions.filter(s => s.problem_category === category)
-        }
+        result = await apiClient.searchSessions('', {
+          ...filters,
+          limit: pageSize,
+          offset: (page - 1) * pageSize
+        })
         
-        setSessions(filteredSessions)
-        setTotalSessions(filteredSessions.length)
+        setSessions(result.results || [])
+        setTotalSessions(result.total || 0)
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || '加载会话列表失败'
@@ -103,10 +98,10 @@ export const useSessionHistory = () => {
       toast.success('会话删除成功')
       
       // 如果当前页没有数据了，跳转到上一页
-      if (sessions.length === 1 && currentPage > 1) {
+      if (sessions && sessions.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1)
       } else {
-        // 重新加载当前页
+        // 重新加载列表
         loadSessions()
       }
     } catch (error: any) {
@@ -114,14 +109,25 @@ export const useSessionHistory = () => {
       toast.error(errorMessage)
       throw error
     }
-  }, [removeSession, sessions.length, currentPage, setCurrentPage, loadSessions])
+  }, [removeSession, sessions?.length, currentPage, setCurrentPage, loadSessions])
 
   // 导出会话
   const exportSession = useCallback(async (sessionId: string, format: 'json' | 'csv' = 'json') => {
     setGlobalLoading(true, '正在导出会话...')
 
     try {
-      const data = await apiClient.exportSessionData(sessionId, format)
+      // 获取会话详情
+      const sessionData = await apiClient.getSession(sessionId)
+      
+      let data: string
+      if (format === 'json') {
+        data = JSON.stringify(sessionData, null, 2)
+      } else {
+        // CSV格式
+        const csvHeader = 'Session ID,Status,Category,Created At,Steps Count\n'
+        const csvRow = `${sessionData.session_id},${sessionData.status},${sessionData.problem_category},${sessionData.created_at},${sessionData.steps?.length || 0}\n`
+        data = csvHeader + csvRow
+      }
       
       // 创建下载链接
       const blob = new Blob([data], { 

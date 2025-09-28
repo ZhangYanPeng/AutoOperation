@@ -3,7 +3,7 @@
  * 统一处理应用程序中的错误
  */
 
-const { logger } = require('./logger');
+import { logger } from './logger.js';
 
 // 自定义错误类
 class AppError extends Error {
@@ -75,7 +75,13 @@ const errorHandler = (err, req, res, next) => {
   // 处理特定类型的错误
   if (err.name === 'ValidationError') {
     statusCode = 400;
-    message = Object.values(err.errors).map(val => val.message).join(', ');
+    // 检查是否有 errors 对象
+    if (err.errors && typeof err.errors === 'object') {
+      message = Object.values(err.errors).map(val => val.message).join(', ');
+    } else {
+      // 使用自定义的 ValidationError 消息
+      message = err.message;
+    }
   }
 
   if (err.name === 'CastError') {
@@ -158,7 +164,7 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-module.exports = {
+export {
   AppError,
   ValidationError,
   NotFoundError,

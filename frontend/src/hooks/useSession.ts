@@ -28,6 +28,12 @@ export const useSession = () => {
 
     try {
       const result = await apiClient.createSession(data)
+      
+      // 根据数组属性安全访问规范，确保返回的数据结构正确
+      if (!result || !result.session) {
+        throw new Error('API 返回数据格式错误')
+      }
+      
       setCurrentSession(result.session)
       toast.success('会话创建成功')
       return result

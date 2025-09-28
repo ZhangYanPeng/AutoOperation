@@ -3,8 +3,8 @@
  * 统一导出所有中间件
  */
 
-const { logger, requestLogger } = require('./logger');
-const { 
+import { logger, requestLogger } from './logger.js';
+import { 
   AppError,
   ValidationError,
   NotFoundError,
@@ -13,8 +13,8 @@ const {
   errorHandler,
   asyncHandler,
   notFound
-} = require('./errorHandler');
-const {
+} from './errorHandler.js';
+import {
   corsOptions,
   generalLimiter,
   apiLimiter,
@@ -24,8 +24,8 @@ const {
   requestSizeLimit,
   ipWhitelist,
   securityHeaders
-} = require('./security');
-const {
+} from './security.js';
+import {
   validateRequired,
   validateTypes,
   validateLength,
@@ -39,9 +39,9 @@ const {
   validateUUID,
   validateNotEmpty,
   validateContentType
-} = require('./validation');
+} from './validation.js';
 
-module.exports = {
+export {
   // 日志相关
   logger,
   requestLogger,

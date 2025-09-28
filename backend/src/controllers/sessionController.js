@@ -3,7 +3,7 @@ import { sessionManagementService } from '../services/SessionManagementService.j
 import { logger } from '../utils/logger.js';
 
 // 导入中间件
-const {
+import {
   asyncHandler,
   validateSessionCreation,
   validateStepExecution,
@@ -11,9 +11,62 @@ const {
   validateSessionSearch,
   validateUUID,
   sessionCreationLimiter
-} = require('../middleware/index.js');
+} from '../middleware/index.js';
 
 const router = express.Router();
+
+// 获取统计信息（放在参数路由之前）
+router.get('/stats/overview', 
+  asyncHandler(async (req, res) => {
+    logger.info('获取会话统计信息');
+
+    const stats = sessionManagementService.getStatistics();
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  })
+);
+
+// 获取用户会话列表（放在参数路由之前）
+router.get('/', 
+  validateSessionSearch, // 验证搜索参数
+  asyncHandler(async (req, res) => {
+    const { userId, limit = 50, offset = 0, search, category, status } = req.query;
+    
+    let result;
+    
+    if (search) {
+      // 搜索会话
+      result = sessionManagementService.searchSessions(search, {
+        userId,
+        category,
+        status,
+        limit: parseInt(limit)
+      });
+    } else if (userId) {
+      // 获取用户会话
+      result = sessionManagementService.getUserSessions(
+        userId,
+        parseInt(limit),
+        parseInt(offset)
+      );
+    } else {
+      // 获取所有会话（管理员功能）
+      result = sessionManagementService.searchSessions('', {
+        category,
+        status,
+        limit: parseInt(limit)
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result
+    });
+  })
+);
 
 // 创建新会话
 router.post('/', 
@@ -162,45 +215,6 @@ router.delete('/:id',
   })
 );
 
-// 获取用户会话列表
-router.get('/', 
-  validateSessionSearch, // 验证搜索参数
-  asyncHandler(async (req, res) => {
-    const { userId, limit = 50, offset = 0, search, category, status } = req.query;
-    
-    let result;
-    
-    if (search) {
-      // 搜索会话
-      result = sessionManagementService.searchSessions(search, {
-        userId,
-        category,
-        status,
-        limit: parseInt(limit)
-      });
-    } else if (userId) {
-      // 获取用户会话
-      result = sessionManagementService.getUserSessions(
-        userId,
-        parseInt(limit),
-        parseInt(offset)
-      );
-    } else {
-      // 获取所有会话（管理员功能）
-      result = sessionManagementService.searchSessions('', {
-        category,
-        status,
-        limit: parseInt(limit)
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: result
-    });
-  })
-);
-
 // 导出会话数据
 router.get('/:id/export', 
   validateUUID('id'), // 验证会话 ID
@@ -222,20 +236,6 @@ router.get('/:id/export',
     }
     
     res.send(data);
-  })
-);
-
-// 获取统计信息
-router.get('/stats/overview', 
-  asyncHandler(async (req, res) => {
-    logger.info('获取会话统计信息');
-
-    const stats = sessionManagementService.getStatistics();
-    
-    res.json({
-      success: true,
-      data: stats
-    });
   })
 );
 

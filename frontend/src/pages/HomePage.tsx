@@ -47,6 +47,12 @@ const HomePage: React.FC = () => {
 
     try {
       const result = await createSession(formData)
+      
+      // 根据 Hook API暴露规范，确保返回的数据结构正确
+      if (!result || !result.session || !result.session.session_id) {
+        throw new Error('创建会话返回数据格式错误')
+      }
+      
       navigate(`/session/${result.session.session_id}`)
     } catch (error) {
       // 错误已在hook中处理
