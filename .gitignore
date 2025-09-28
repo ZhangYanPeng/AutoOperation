@@ -136,3 +136,7 @@ build/
 # Test files
 test-results/
 coverage/
+backend/data/sessions/8187c0ce-1617-4c69-9001-53f50ce99b97.json
+backend/data/sessions/9926d47c-1030-488a-94cb-190902f41f2d.json
+backend/data/sessions/34943975-77cb-40bb-be01-e39bb1f52752.json
+backend/data/sessions/d0ebbeb3-5673-4ac3-9f37-ce08552f07d2.json
