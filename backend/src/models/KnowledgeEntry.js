@@ -19,7 +19,18 @@ export class KnowledgeEntry {
     metadata = {},
     version = '1.0.0',
     author = null,
-    source_file = null
+    source_file = null,
+    // 新增文档管理相关字段
+    file_name = null,
+    file_size = 0,
+    mime_type = 'text/markdown',
+    upload_time = null,
+    last_modified = null,
+    uploader = null,
+    status = 'published', // draft, published, archived
+    version_history = [],
+    tags = [],
+    is_locked = false
   }) {
     this.knowledge_id = knowledge_id || uuidv4();
     this.knowledge_type = knowledge_type; // operation-procedure, device-api
@@ -34,6 +45,19 @@ export class KnowledgeEntry {
     this.version = version;
     this.author = author;
     this.source_file = source_file;
+    
+    // 文档管理扩展字段
+    this.file_name = file_name;
+    this.file_size = file_size;
+    this.mime_type = mime_type;
+    this.upload_time = upload_time;
+    this.last_modified = last_modified;
+    this.uploader = uploader;
+    this.status = status;
+    this.version_history = Array.isArray(version_history) ? version_history : [];
+    this.tags = Array.isArray(tags) ? tags : [];
+    this.is_locked = is_locked;
+    
     this.created_at = new Date().toISOString();
     this.last_updated = new Date().toISOString();
   }
@@ -63,6 +87,16 @@ export class KnowledgeEntry {
 
     if (this.effectiveness_score < 0 || this.effectiveness_score > 1) {
       errors.push('有效性评分必须在0-1之间');
+    }
+    
+    // 验证文档管理相关字段
+    const validStatuses = ['draft', 'published', 'archived'];
+    if (!validStatuses.includes(this.status)) {
+      errors.push(`文档状态必须是以下之一: ${validStatuses.join(', ')}`);
+    }
+    
+    if (this.file_size < 0) {
+      errors.push('文件大小不能为负数');
     }
 
     return {
@@ -100,6 +134,118 @@ export class KnowledgeEntry {
         this.keywords.push(keyword.toLowerCase());
       }
     });
+    this.last_updated = new Date().toISOString();
+  }
+  
+  /**
+   * 添加标签
+   */
+  addTags(newTags) {
+    const tagsToAdd = Array.isArray(newTags) ? newTags : [newTags];
+    tagsToAdd.forEach(tag => {
+      if (tag && !this.tags.includes(tag.toLowerCase())) {
+        this.tags.push(tag.toLowerCase());
+      }
+    });
+    this.last_updated = new Date().toISOString();
+  }
+  
+  /**
+   * 移除标签
+   */
+  removeTags(tagsToRemove) {
+    const tagsArray = Array.isArray(tagsToRemove) ? tagsToRemove : [tagsToRemove];
+    tagsArray.forEach(tag => {
+      const index = this.tags.indexOf(tag.toLowerCase());
+      if (index !== -1) {
+        this.tags.splice(index, 1);
+      }
+    });
+    this.last_updated = new Date().toISOString();
+  }
+  
+  /**
+   * 更新文档状态
+   */
+  updateStatus(newStatus) {
+    const validStatuses = ['draft', 'published', 'archived'];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(`无效的文档状态: ${newStatus}`);
+    }
+    this.status = newStatus;
+    this.last_updated = new Date().toISOString();
+  }
+  
+  /**
+   * 锁定文档
+   */
+  lock(lockingUser = null) {
+    this.is_locked = true;
+    if (lockingUser) {
+      this.metadata.locked_by = lockingUser;
+      this.metadata.locked_at = new Date().toISOString();
+    }
+    this.last_updated = new Date().toISOString();
+  }
+  
+  /**
+   * 解锁文档
+   */
+  unlock() {
+    this.is_locked = false;
+    if (this.metadata.locked_by) {
+      delete this.metadata.locked_by;
+      delete this.metadata.locked_at;
+    }
+    this.last_updated = new Date().toISOString();
+  }
+  
+  /**
+   * 创建版本快照
+   */
+  createVersionSnapshot(description = '') {
+    const snapshot = {
+      version: this.version,
+      title: this.title,
+      content: this.content,
+      keywords: [...this.keywords],
+      tags: [...this.tags],
+      category: this.category,
+      metadata: { ...this.metadata },
+      timestamp: new Date().toISOString(),
+      description
+    };
+    
+    this.version_history.push(snapshot);
+    
+    // 只保留最近10个版本
+    if (this.version_history.length > 10) {
+      this.version_history = this.version_history.slice(-10);
+    }
+    
+    this.last_updated = new Date().toISOString();
+    return snapshot;
+  }
+  
+  /**
+   * 更新文档内容并创建版本快照
+   */
+  updateContent(newContent, description = '内容更新') {
+    if (this.is_locked) {
+      throw new Error('文档已被锁定，无法编辑');
+    }
+    
+    // 创建当前版本快照
+    this.createVersionSnapshot(description);
+    
+    // 更新内容
+    this.content = newContent;
+    
+    // 更新版本号
+    const versionParts = this.version.split('.');
+    versionParts[2] = (parseInt(versionParts[2]) + 1).toString();
+    this.version = versionParts.join('.');
+    
     this.last_updated = new Date().toISOString();
   }
 
@@ -198,6 +344,17 @@ export class KnowledgeEntry {
       version: this.version,
       author: this.author,
       source_file: this.source_file,
+      // 新增字段
+      file_name: this.file_name,
+      file_size: this.file_size,
+      mime_type: this.mime_type,
+      upload_time: this.upload_time,
+      last_modified: this.last_modified,
+      uploader: this.uploader,
+      status: this.status,
+      version_history: this.version_history,
+      tags: this.tags,
+      is_locked: this.is_locked,
       created_at: this.created_at,
       last_updated: this.last_updated
     };

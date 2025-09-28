@@ -30,6 +30,10 @@ import { sessionManagementService } from './services/SessionManagementService.js
 import sessionRoutes from './controllers/sessionController.js';
 import toolRoutes from './controllers/toolController.js';
 import knowledgeRoutes from './controllers/knowledgeController.js';
+import documentRoutes from './controllers/documentController.js';
+
+// 文档管理中间件导入
+import uploadMiddleware from './middleware/uploadMiddleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -103,6 +107,7 @@ app.get('/status', (req, res) => {
 app.use('/api/v1/session', sessionRoutes);
 app.use('/api/v1/tools', toolRoutes);
 app.use('/api/v1/knowledge', knowledgeRoutes);
+app.use('/api/v1/documents', documentRoutes);
 
 // 404处理
 app.use(notFound);
