@@ -5,10 +5,12 @@
 export { Session } from './Session.js';
 export { Step } from './Step.js';
 export { KnowledgeEntry } from './KnowledgeEntry.js';
+export { Category } from './Category.js';
 
 // 默认导出所有模型
 export default {
   Session,
   Step,
-  KnowledgeEntry
+  KnowledgeEntry,
+  Category
 };

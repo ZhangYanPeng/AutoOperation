@@ -12,7 +12,8 @@ export class KnowledgeEntry {
     title,
     content,
     keywords = [],
-    category = null,
+    category_id = null, // 改为引用分类ID
+    category_tags = [], // 新增辅助分类标签
     priority = 0,
     usage_count = 0,
     effectiveness_score = 0,
@@ -30,14 +31,18 @@ export class KnowledgeEntry {
     status = 'published', // draft, published, archived
     version_history = [],
     tags = [],
-    is_locked = false
+    is_locked = false,
+    // 新增分类管理相关字段
+    category_updated_at = null,
+    category_updated_by = null
   }) {
     this.knowledge_id = knowledge_id || uuidv4();
     this.knowledge_type = knowledge_type; // operation-procedure, device-api
     this.title = title;
     this.content = content;
     this.keywords = Array.isArray(keywords) ? keywords : [];
-    this.category = category;
+    this.category_id = category_id; // 分类ID引用
+    this.category_tags = Array.isArray(category_tags) ? category_tags : [];
     this.priority = priority;
     this.usage_count = usage_count;
     this.effectiveness_score = effectiveness_score;
@@ -57,6 +62,8 @@ export class KnowledgeEntry {
     this.version_history = Array.isArray(version_history) ? version_history : [];
     this.tags = Array.isArray(tags) ? tags : [];
     this.is_locked = is_locked;
+    this.category_updated_at = category_updated_at;
+    this.category_updated_by = category_updated_by;
     
     this.created_at = new Date().toISOString();
     this.last_updated = new Date().toISOString();
@@ -159,6 +166,43 @@ export class KnowledgeEntry {
       const index = this.tags.indexOf(tag.toLowerCase());
       if (index !== -1) {
         this.tags.splice(index, 1);
+      }
+    });
+    this.last_updated = new Date().toISOString();
+  }
+
+  /**
+   * 更新分类
+   */
+  updateCategory(categoryId, updatedBy = null) {
+    this.category_id = categoryId;
+    this.category_updated_at = new Date().toISOString();
+    this.category_updated_by = updatedBy;
+    this.last_updated = new Date().toISOString();
+  }
+
+  /**
+   * 添加分类标签
+   */
+  addCategoryTags(newTags) {
+    const tagsToAdd = Array.isArray(newTags) ? newTags : [newTags];
+    tagsToAdd.forEach(tag => {
+      if (tag && !this.category_tags.includes(tag.toLowerCase())) {
+        this.category_tags.push(tag.toLowerCase());
+      }
+    });
+    this.last_updated = new Date().toISOString();
+  }
+
+  /**
+   * 移除分类标签
+   */
+  removeCategoryTags(tagsToRemove) {
+    const tagsArray = Array.isArray(tagsToRemove) ? tagsToRemove : [tagsToRemove];
+    tagsArray.forEach(tag => {
+      const index = this.category_tags.indexOf(tag.toLowerCase());
+      if (index !== -1) {
+        this.category_tags.splice(index, 1);
       }
     });
     this.last_updated = new Date().toISOString();
@@ -286,10 +330,13 @@ export class KnowledgeEntry {
       reasons.push(`内容匹配: ${contentMatches.length} 个词条`);
     }
 
-    // 分类匹配（低权重）
-    if (this.category && searchTerms.includes(this.category.toLowerCase())) {
-      score += 0.5;
-      reasons.push(`分类匹配: ${this.category}`);
+    // 分类标签匹配（低权重）
+    const categoryTagMatches = searchTerms.filter(term => 
+      this.category_tags.some(tag => tag.includes(term))
+    );
+    if (categoryTagMatches.length > 0) {
+      score += categoryTagMatches.length * 0.5;
+      reasons.push(`分类标签匹配: ${categoryTagMatches.join(', ')}`);
     }
 
     // 类型过滤
@@ -336,7 +383,8 @@ export class KnowledgeEntry {
       title: this.title,
       content: this.content,
       keywords: this.keywords,
-      category: this.category,
+      category_id: this.category_id,
+      category_tags: this.category_tags,
       priority: this.priority,
       usage_count: this.usage_count,
       effectiveness_score: this.effectiveness_score,
@@ -355,6 +403,8 @@ export class KnowledgeEntry {
       version_history: this.version_history,
       tags: this.tags,
       is_locked: this.is_locked,
+      category_updated_at: this.category_updated_at,
+      category_updated_by: this.category_updated_by,
       created_at: this.created_at,
       last_updated: this.last_updated
     };

@@ -25,12 +25,18 @@ import { llmService } from './services/LLMService.js';
 import { knowledgeBaseService } from './services/KnowledgeBaseService.js';
 import { toolExecutionService } from './services/ToolExecutionService.js';
 import { sessionManagementService } from './services/SessionManagementService.js';
+import { categoryService } from './services/CategoryService.js';
+import { troubleKnowledgeService } from './services/TroubleKnowledgeService.js';
+import { deviceAPIService } from './services/DeviceAPIService.js';
+import { searchRouterService } from './services/SearchRouterService.js';
 
 // 路由导入
 import sessionRoutes from './controllers/sessionController.js';
 import toolRoutes from './controllers/toolController.js';
 import knowledgeRoutes from './controllers/knowledgeController.js';
 import documentRoutes from './controllers/documentController.js';
+import categoryRoutes from './controllers/categoryController.js';
+import searchRoutes from './controllers/searchController.js';
 
 // 文档管理中间件导入
 import uploadMiddleware from './middleware/uploadMiddleware.js';
@@ -44,6 +50,10 @@ async function initializeServices() {
     logger.info('开始初始化后端服务...');
     
     // 按依赖顺序初始化服务
+    await categoryService.initialize(); // 先初始化分类服务
+    await troubleKnowledgeService.initialize(); // 初始化故障处置知识服务
+    await deviceAPIService.initialize(); // 初始化设备API服务
+    await searchRouterService.initialize(); // 初始化搜索路由服务
     await llmService.initialize();
     await knowledgeBaseService.initialize();
     await toolExecutionService.initialize();
@@ -83,6 +93,10 @@ app.get('/health', (req, res) => {
     version: '1.0.0',
     services: {
       llm: llmService.initialized,
+      categories: categoryService.initialized,
+      troubleKnowledge: troubleKnowledgeService.initialized,
+      deviceAPI: deviceAPIService.initialized,
+      searchRouter: searchRouterService.initialized,
       knowledge: knowledgeBaseService.initialized,
       tools: toolExecutionService.initialized,
       sessions: sessionManagementService.initialized
@@ -96,6 +110,10 @@ app.get('/status', (req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       llm: llmService.getStatus(),
+      categories: categoryService.getStatistics(),
+      troubleKnowledge: troubleKnowledgeService.getStatistics(),
+      deviceAPI: deviceAPIService.getStatistics(),
+      searchRouter: searchRouterService.getStatistics(),
       knowledge: knowledgeBaseService.getStatistics(),
       tools: toolExecutionService.getStatus(),
       sessions: sessionManagementService.getServiceStatus()
@@ -108,6 +126,8 @@ app.use('/api/v1/session', sessionRoutes);
 app.use('/api/v1/tools', toolRoutes);
 app.use('/api/v1/knowledge', knowledgeRoutes);
 app.use('/api/v1/documents', documentRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/search', searchRoutes);
 
 // 404处理
 app.use(notFound);
