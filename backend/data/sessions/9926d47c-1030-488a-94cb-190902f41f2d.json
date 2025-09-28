@@ -3,8 +3,8 @@
   "problem_category": "performance",
   "problem_description": "服务器CPU使用率持续超过90%，系统响应缓慢",
   "status": "processing",
-  "created_at": "2025-09-28T07:01:36.904Z",
-  "updated_at": "2025-09-28T07:01:36.904Z",
+  "created_at": "2025-09-28T07:02:37.897Z",
+  "updated_at": "2025-09-28T07:02:37.897Z",
   "user_id": null,
   "metadata": {},
   "steps": [
@@ -22,8 +22,8 @@
       "timeout": 30000,
       "retry_count": 0,
       "max_retries": 3,
-      "created_at": "2025-09-28T07:01:36.904Z",
-      "updated_at": "2025-09-28T07:01:36.904Z",
+      "created_at": "2025-09-28T07:02:37.897Z",
+      "updated_at": "2025-09-28T07:02:37.897Z",
       "started_at": null,
       "completed_at": null,
       "duration": null
