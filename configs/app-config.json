@@ -1,0 +1,40 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "api_prefix": "/api/v1"
+  },
+  "cors": {
+    "origin": ["http://localhost:5173", "http://localhost:3000"],
+    "credentials": true
+  },
+  "rate_limiting": {
+    "window_ms": 900000,
+    "max_requests": 100,
+    "message": "请求过于频繁，请稍后再试"
+  },
+  "logging": {
+    "level": "info",
+    "file_rotation": true,
+    "max_file_size": "5MB",
+    "max_files": 5
+  },
+  "session_management": {
+    "enable_file_storage": true,
+    "auto_save": true,
+    "save_interval": 30000,
+    "max_sessions_in_memory": 1000,
+    "session_ttl": 86400000
+  },
+  "knowledge_base": {
+    "auto_reload": false,
+    "cache_enabled": true,
+    "search_result_limit": 50
+  },
+  "tool_execution": {
+    "timeout": 30000,
+    "max_retries": 3,
+    "retry_delay": 1000,
+    "retry_backoff_factor": 2
+  }
+}

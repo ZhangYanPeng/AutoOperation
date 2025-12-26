@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "active_provider": "mock",
+  "providers": {
+    "ollama": {
+      "name": "Ollama",
+      "type": "local",
+      "endpoint": "http://localhost:11434",
+      "models": {
+        "primary": "llama2",
+        "fallback": "qwen2"
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 2048,
+        "top_p": 0.9,
+        "timeout": 30000
+      },
+      "enabled": true
+    },
+    "openai": {
+      "name": "OpenAI",
+      "type": "remote",
+      "endpoint": "https://api.openai.com/v1",
+      "api_key": "${OPENAI_API_KEY}",
+      "models": {
+        "primary": "gpt-3.5-turbo",
+        "fallback": "gpt-3.5-turbo-0613"
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 2048,
+        "top_p": 0.9,
+        "timeout": 30000
+      },
+      "enabled": false
+    },
+    "mock": {
+      "name": "Mock Provider",
+      "type": "mock",
+      "endpoint": "mock://localhost",
+      "models": {
+        "primary": "mock-model",
+        "fallback": "mock-model"
+      },
+      "enabled": true,
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 2048,
+        "timeout": 1000
+      }
+    }
+  },
+  "retry_config": {
+    "max_retries": 3,
+    "retry_delay": 1000,
+    "backoff_factor": 2
+  },
+  "cache_config": {
+    "enabled": true,
+    "ttl": 3600,
+    "max_size": 1000
+  },
+  "prompt_templates": {
+    "problem_analysis": "请分析以下运维问题并提供处置步骤:\\n\\n问题分类: {category}\\n问题描述: {description}\\n\\n请按照以下格式返回结构化的处置方案:\\n1. 问题分析\\n2. 处置步骤（按优先级排序）\\n3. 注意事项",
+    "step_generation": "基于以下上下文生成下一个处置步骤:\\n\\n当前状态: {current_status}\\n已完成步骤: {completed_steps}\\n用户反馈: {user_feedback}\\n\\n请提供具体的下一步操作指导。",
+    "result_evaluation": "请评估以下处置步骤的执行结果:\\n\\n步骤描述: {step_description}\\n执行结果: {execution_result}\\n\\n请判断是否成功，并提供下一步建议。"
+  }
+}

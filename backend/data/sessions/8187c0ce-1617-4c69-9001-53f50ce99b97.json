@@ -1,0 +1,37 @@
+{
+  "session_id": "8187c0ce-1617-4c69-9001-53f50ce99b97",
+  "problem_category": "performance",
+  "problem_description": "服务器CPU使用率持续超过90%，系统响应缓慢",
+  "status": "processing",
+  "created_at": "2025-09-28T07:31:31.758Z",
+  "updated_at": "2025-09-28T07:31:31.758Z",
+  "user_id": null,
+  "metadata": {},
+  "steps": [
+    {
+      "step_id": "018d44dc-b00b-4b3c-906d-abff251f5896",
+      "session_id": "8187c0ce-1617-4c69-9001-53f50ce99b97",
+      "step_order": 1,
+      "step_type": "manual",
+      "step_content": "这是一个模拟响应。根据您的问题：",
+      "tool_api": null,
+      "execution_status": "pending",
+      "execution_result": null,
+      "user_feedback": null,
+      "dependencies": [],
+      "timeout": 30000,
+      "retry_count": 0,
+      "max_retries": 3,
+      "created_at": "2025-09-28T07:31:31.758Z",
+      "updated_at": "2025-09-28T07:31:31.758Z",
+      "started_at": null,
+      "completed_at": null,
+      "duration": null
+    }
+  ],
+  "progress": {
+    "total_steps": 1,
+    "completed_steps": 0,
+    "current_step": "018d44dc-b00b-4b3c-906d-abff251f5896"
+  }
+}

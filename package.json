@@ -1,0 +1,42 @@
+{
+  "name": "intelligent-operation-assistant",
+  "version": "1.0.0",
+  "description": "智能运维助手 - 基于大语言模型的智能化运维处置系统",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "operations",
+    "assistant",
+    "automation",
+    "intelligent-ops"
+  ],
+  "author": "AutoOperation Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "file-type": "^21.0.0",
+    "markdown-it": "^14.1.0",
+    "multer": "^2.0.2",
+    "sharp": "^0.34.4"
+  }
+}
